@@ -1,0 +1,1130 @@
+package com.example.travelinsuranceservice;
+
+// Import required Spring Boot classes
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+
+ 
+/**
+ * Main entry point for the Spring Boot Travel Insurance & Assistance module.
+ *
+ * What this file does:
+ * 🔹 Marks the starting point of the application
+ * 🔹 Enables auto-configuration, component scanning, and bean registration
+ * 🔹 Boots up the Spring application context and starts the embedded server (Tomcat)
+ *
+ * Annotations used:
+ * @SpringBootApplication is a combination of:
+ *   - @Configuration: marks this class as a source of bean definitions
+ *   - @EnableAutoConfiguration: tells Spring Boot to auto-configure beans based on dependencies
+ *   - @ComponentScan: scans this package and all sub-packages for Spring components
+ */
+@EnableFeignClients(basePackages="com.example.travelinsuranceservice.client")
+@SpringBootApplication
+@EnableDiscoveryClient //Enables Eureka client functionality
+public class TravelInsuranceApplication {
+ 
+    /**
+     * Main method that gets executed when the application starts.
+     *
+     * @param args command-line arguments (optional)
+     */
+    public static void main(String[] args) {
+        // Launch the Spring Boot application
+        SpringApplication.run(TravelInsuranceApplication.class, args);
+    }
+}
+
+ 
+
+
+
+
+
+
+package com.example.travelinsuranceservice.client;
+ 
+import com.example.travelinsuranceservice.dto.BookingDTO;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+ 
+/**
+* Feign client to communicate with the Booking module.
+*/
+@FeignClient(name = "booking-service")
+public interface BookingClient {
+ 
+    /**
+     * Fetch booking details by bookingId from the Booking module.
+     * @param bookingId the ID of the booking
+     * @return the BookingDTO containing booking information
+     */
+    @GetMapping("/api/bookings/{id}")
+    BookingDTO getBookingById(@PathVariable("id") Integer bookingId);
+}
+
+
+
+
+
+
+
+
+package com.example.travelinsuranceservice.client;
+ 
+import com.example.travelinsuranceservice.dto.UserDTO;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+ 
+/**
+ * Feign client to communicate with the User module.
+ */
+@FeignClient(name = "user-service")
+public interface UserClient {
+ 
+    /**
+     * Fetch user details by userId from the User module.
+     * @param userId the ID of the user
+     * @return the UserDTO containing user information
+     */
+    @GetMapping("/api/users/internal/{id}")
+    UserDTO getUserById(@PathVariable("id") Integer userId);
+}
+
+ 
+
+
+
+
+
+package com.example.travelinsuranceservice.controller;
+ 
+import com.example.travelinsuranceservice.dto.AssistanceRequestDTO;
+import com.example.travelinsuranceservice.model.AssistanceRequest;
+import com.example.travelinsuranceservice.service.AssistanceRequestService;
+import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.*;
+import org.springframework.web.bind.annotation.*;
+ 
+import java.util.List;
+ 
+/**
+ * Controller for handling assistance-related requests.
+ */
+@RestController
+@RequestMapping("/api/assistance")
+public class AssistanceRequestController {
+ 
+    private static final Logger logger = LoggerFactory.getLogger(AssistanceRequestController.class);
+ 
+    @Autowired
+    private AssistanceRequestService service;
+ 
+    /**
+     * POST /api/assistance
+     * Create a new assistance request for a user.
+     */
+    @PostMapping
+    public ResponseEntity<AssistanceRequest> requestHelp(@Valid @RequestBody AssistanceRequestDTO dto) {
+        logger.info("Creating assistance request for userId: {}", dto.getUserId());
+        AssistanceRequest request = service.createRequest(dto);
+        return new ResponseEntity<>(request, HttpStatus.CREATED);
+    }
+ 
+    /**
+     * PUT /api/assistance/{requestId}/status?status=Resolved
+     * Update the status of an assistance request.
+     */
+    @PutMapping("/{requestId}/status")
+    public ResponseEntity<AssistanceRequest> updateStatus(@PathVariable Integer requestId,
+                                                   @RequestParam String status) {
+        logger.info("Updating assistance status for requestId {} to {}", requestId, status);
+        return ResponseEntity.ok(service.updateStatus(requestId, status));
+    }
+ 
+    /**
+     * GET /api/assistance/user/{userId}
+     * Fetch all assistance requests made by a user.
+     */
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<AssistanceRequest>> getByUser(@PathVariable Integer userId) {
+        logger.info("Fetching assistance requests for userId: {}", userId);
+        return ResponseEntity.ok(service.getByUser(userId));
+    }
+}
+ 
+
+
+
+
+
+package com.example.travelinsuranceservice.controller;
+ 
+import com.example.travelinsuranceservice.dto.*;
+import com.example.travelinsuranceservice.model.CoverageType;
+import com.example.travelinsuranceservice.model.Insurance;
+import com.example.travelinsuranceservice.service.InsuranceService;
+import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.*;
+import org.springframework.web.bind.annotation.*;
+ 
+import java.util.*;
+import java.util.stream.Collectors;
+ 
+/**
+ * Controller for managing travel insurance APIs.
+ */
+@RestController
+@RequestMapping("/api/insurance")
+public class InsuranceController {
+ 
+    // Logger to track method execution and debug
+    private static final Logger logger = LoggerFactory.getLogger(InsuranceController.class);
+ 
+    @Autowired
+    private InsuranceService service;
+ 
+    /**
+     * POST /api/insurance
+     * Create new insurance for a user with selected coverage type.
+     */
+    @PostMapping
+    public ResponseEntity<Insurance> createInsurance(@Valid @RequestBody InsuranceRequestDTO dto) {
+        logger.info("Creating insurance for userId: {}", dto.getUserId());
+        Insurance insurance = service.createInsurance(dto);
+        return new ResponseEntity<>(insurance, HttpStatus.CREATED);
+    }
+ 
+    /**
+     * PUT /api/insurance/{insuranceId}/booking?bookingId=123
+     * Attach a bookingId to an existing insurance policy.
+     */
+    @PutMapping("/{insuranceId}/bookings")
+    public ResponseEntity<Insurance> updateBooking(@PathVariable Integer insuranceId,
+                                                   @RequestParam Integer bookingId) {
+        logger.info("Linking bookingId {} to insuranceId {}", bookingId, insuranceId);
+        return ResponseEntity.ok(service.updateBookingId(insuranceId, bookingId));
+    }
+ 
+    /**
+     * PUT /api/insurance/{insuranceId}/status?status=Cancelled
+     * Update the status of an insurance policy.
+     */
+    @PutMapping("/{insuranceId}/status")
+    public ResponseEntity<Insurance> updateStatus(@PathVariable Integer insuranceId,
+                                                  @RequestParam String status) {
+        logger.info("Updating insurance status for ID {} to {}", insuranceId, status);
+        return ResponseEntity.ok(service.updateStatus(insuranceId, status));
+    }
+ 
+    /**
+     * GET /api/insurance/user/{userId}
+     * Fetch all insurance policies for a specific user.
+     */
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<Insurance>> getByUser(@PathVariable Integer userId) {
+        logger.info("Fetching insurance for userId: {}", userId);
+        return ResponseEntity.ok(service.getUserInsurance(userId));
+    }
+ 
+    /**
+     * GET /api/insurance/coverage-plans
+     * Return available insurance coverage options.
+     */
+    @GetMapping("/coverage-plans")
+    public ResponseEntity<List<CoveragePlanDTO>> getCoveragePlans() {
+        logger.info("Fetching available coverage plan options.");
+        List<CoveragePlanDTO> plans = Arrays.stream(CoverageType.values())
+                .map(type -> new CoveragePlanDTO(
+                        type.name(),
+                        type.getCoverageDetails(),
+                        type.getPrice(),
+                        type.getClaimableAmount()))
+                .collect(Collectors.toList());
+ 
+        return ResponseEntity.ok(plans);
+    }
+}
+ 
+
+
+
+
+
+package com.example.travelinsuranceservice.dto;
+ 
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+ 
+/**
+ * DTO used to receive a new assistance request from the user.
+ */
+@Data
+public class AssistanceRequestDTO {
+ 
+    @NotNull(message = "User ID is required")
+    private Integer userId;
+ 
+    @NotNull(message = "Issue description is required")
+    private String issueDescription;
+}
+ 
+
+
+
+
+
+package com.example.travelinsuranceservice.dto;
+ 
+import lombok.Data;
+ 
+import java.time.LocalDate;
+ 
+@Data
+public class BookingDTO {
+    private Integer bookingId;
+    private Integer userId;
+    private Integer packageId;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private String status;
+    private Integer paymentId;
+}
+ 
+
+
+
+package com.example.travelinsuranceservice.dto;
+ 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+ 
+/**
+ * DTO to expose insurance coverage plans to Booking module.
+ */
+@Data
+@AllArgsConstructor
+public class CoveragePlanDTO {
+    private String coverageType;       // BASIC, STANDARD, PREMIUM
+    private String coverageDetails;    // Human-readable description
+    private Double price;              // Fixed price per plan
+    private Double claimableAmount;    // Max claim amount per plan
+}
+ 
+
+
+
+
+
+package com.example.travelinsuranceservice.dto;
+ 
+import com.example.travelinsuranceservice.model.CoverageType;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+ 
+/**
+ * DTO used to receive insurance creation requests.
+ * Sent by the Booking module or frontend when a user selects a coverage plan.
+ */
+@Data
+public class InsuranceRequestDTO {
+ 
+    @NotNull(message = "User ID is required")
+    private Integer userId;
+ 
+    @NotNull(message = "Coverage type is required")
+    private CoverageType coverageType;
+}
+ 
+
+
+
+
+package com.example.travelinsuranceservice.dto;
+ 
+import lombok.Data;
+ 
+/**
+ * Used to receive user details from the User module.
+ */
+@Data
+public class UserDTO {
+    private Long id;
+    private String name;
+    private String email;
+    private String role;
+}
+ 
+
+
+package com.example.travelinsuranceservice.exception;
+ 
+import org.springframework.http.*;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.*;
+ 
+import java.util.*;
+ 
+/**
+ * Handles all exceptions across the application in a unified format.
+ */
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+ 
+    // Handles custom not-found exceptions
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleNotFound(ResourceNotFoundException ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+ 
+    // Handles input validation failures (e.g. null fields, missing @Valid values)
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getFieldErrors()
+                .forEach(e -> errors.put(e.getField(), e.getDefaultMessage()));
+        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+    }
+ 
+    // Handles invalid user/booking ID validation via Feign clients
+    @ExceptionHandler(InvalidInputException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidInput(InvalidInputException ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+ 
+    // Handles any other unexpected exception
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, String>> handleGeneral(Exception ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", "Unexpected error: " + ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+}
+ 
+
+
+
+
+package com.example.travelinsuranceservice.exception;
+ 
+/**
+ * Custom exception used when user or booking ID is invalid.
+ * Thrown when validation via Feign client fails.
+ */
+public class InvalidInputException extends RuntimeException {
+ 
+    private static final long serialVersionUID = 1L;
+ 
+    public InvalidInputException(String message) {
+        super(message);
+    }
+}
+ 
+
+
+
+
+package com.example.travelinsuranceservice.exception;
+ 
+/**
+ * Custom exception to be thrown when an entity is not found.
+ * Used for insuranceId and requestId not present in DB.
+ */
+public class ResourceNotFoundException extends RuntimeException {
+ 
+    // Added to avoid serialization warning
+    private static final long serialVersionUID = 1L;
+ 
+    /**
+     * Constructor that passes the error message to parent RuntimeException.
+     *
+     * @param message details of the exception
+     */
+    public ResourceNotFoundException(String message) {
+        super(message); // Calls parent class constructor
+    }
+}
+ 
+
+
+
+
+package com.example.travelinsuranceservice.model;
+ 
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+ 
+import java.time.LocalDateTime;
+ 
+/**
+ * Entity class mapped to 'assistance_request' table.
+ * Auto-generates request timestamp and has fixed resolution time.
+ */
+@Entity
+@Data
+@NoArgsConstructor
+public class AssistanceRequest {
+ 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer requestId; // Auto-generated primary key
+ 
+    @NotNull(message = "User ID cannot be null")
+    private Integer userId; // Provided by external module
+ 
+    @NotNull(message = "Issue description cannot be empty")
+    private String issueDescription; // Reason for assistance (e.g. Lost passport)
+ 
+    private String status = "Pending"; // Default status at creation
+ 
+    private String resolutionTime = "24 hours"; // Always fixed
+ 
+    private LocalDateTime requestTimestamp; // Date + time of request
+ 
+    /**
+     * Automatically sets the timestamp before insertion.
+     */
+    @PrePersist
+    public void setRequestTimestamp() {
+        this.requestTimestamp = LocalDateTime.now();
+    }
+}
+ 
+
+
+
+
+
+package com.example.travelinsuranceservice.model;
+ 
+import lombok.Getter;
+ 
+/**
+ * Enum to represent predefined coverage types.
+ * Each type has fixed coverage details, price, and claimable amount.
+ * Lombok @Getter is used to generate getter methods for each field.
+ */
+@Getter
+public enum CoverageType {
+ 
+    BASIC("Basic Coverage", 200.0, 100000.0),
+    STANDARD("Standard Coverage", 400.0, 200000.0),
+    PREMIUM("Premium Coverage", 600.0, 500000.0);
+ 
+    private final String coverageDetails;
+    private final Double price;
+    private final Double claimableAmount;
+ 
+    /**
+     * Constructor to initialize enum values.
+     *
+     * @param coverageDetails description of coverage
+     * @param price price of the coverage
+     * @param claimableAmount amount claimable under this plan
+     */
+    CoverageType(String coverageDetails, Double price, Double claimableAmount) {
+        this.coverageDetails = coverageDetails;
+        this.price = price;
+        this.claimableAmount = claimableAmount;
+    }
+}
+ 
+
+
+
+package com.example.travelinsuranceservice.model;
+ 
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+ 
+/**
+ * Represents an insurance record for a user's travel booking.
+ * bookingId is set later after booking is created.
+ */
+@Entity
+@Data
+@NoArgsConstructor
+public class Insurance {
+ 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer insuranceId;
+ 
+    @NotNull(message = "User ID cannot be null")
+    private Integer userId;
+ 
+    // Optional field, set later
+    private Integer bookingId;
+ 
+    private String coverageDetails;
+ 
+    private String provider = "Secure Travel Insurance Co.";
+ 
+    private String status = "Active";
+ 
+    private Double price;
+ 
+    private Double claimableAmount;
+ 
+    @Enumerated(EnumType.STRING)
+    @NotNull(message = "Coverage Type is required")
+    private CoverageType coverageType;
+ 
+    @PrePersist
+    public void setValuesFromCoverageType() {
+        if (coverageType != null) {
+            this.coverageDetails = coverageType.getCoverageDetails();
+            this.price = coverageType.getPrice();
+            this.claimableAmount = coverageType.getClaimableAmount();
+        }
+    }
+}
+ 
+
+
+
+
+
+package com.example.travelinsuranceservice.repository;
+ 
+import com.example.travelinsuranceservice.model.AssistanceRequest;
+import org.springframework.data.jpa.repository.JpaRepository;
+ 
+import java.util.List;
+ 
+/**
+ * Repository interface for AssistanceRequest entity.
+ * Provides CRUD operations and custom method to search by userId.
+ */
+public interface AssistanceRequestRepository extends JpaRepository<AssistanceRequest, Integer> {
+ 
+    /**
+     * Returns all assistance requests submitted by a specific user.
+     *
+     * @param userId ID of the user
+     * @return List of AssistanceRequest objects
+     */
+    List<AssistanceRequest> findByUserId(Integer userId);
+}
+ 
+
+
+
+
+package com.example.travelinsuranceservice.repository;
+ 
+import com.example.travelinsuranceservice.model.Insurance;
+import org.springframework.data.jpa.repository.JpaRepository;
+ 
+import java.util.List;
+ 
+/**
+ * Repository interface for Insurance entity.
+ * Extends JpaRepository to get CRUD operations automatically.
+ */
+public interface InsuranceRepository extends JpaRepository<Insurance, Integer> {
+ 
+    /**
+     * Custom finder method to retrieve all insurance records for a given userId.
+     * Spring Data JPA automatically generates the query from the method name.
+     *
+     * @param userId ID of the user
+     * @return List of Insurance objects associated with the user
+     */
+    List<Insurance> findByUserId(Integer userId);
+}
+ 
+
+
+
+
+
+
+
+package com.example.travelinsuranceservice.service;
+ 
+import com.example.travelinsuranceservice.client.UserClient;
+import com.example.travelinsuranceservice.dto.AssistanceRequestDTO;
+import com.example.travelinsuranceservice.exception.*;
+import com.example.travelinsuranceservice.model.AssistanceRequest;
+import com.example.travelinsuranceservice.repository.AssistanceRequestRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+ 
+import java.util.List;
+ 
+/**
+ * Business logic for managing Assistance requests.
+ */
+@Service
+public class AssistanceRequestService {
+ 
+    private static final Logger logger = LoggerFactory.getLogger(AssistanceRequestService.class);
+ 
+    @Autowired
+    private AssistanceRequestRepository repo;
+ 
+    @Autowired
+    private UserClient userClient;
+ 
+    /**
+     * Validates user and creates a new assistance request.
+     */
+    public AssistanceRequest createRequest(AssistanceRequestDTO dto) {
+        logger.info("Validating userId: {}", dto.getUserId());
+        if (userClient.getUserById(dto.getUserId()) == null) {
+            logger.error("Invalid userId: {}", dto.getUserId());
+            throw new InvalidInputException("Invalid user ID: " + dto.getUserId());
+        }
+ 
+        AssistanceRequest request = new AssistanceRequest();
+        request.setUserId(dto.getUserId());
+        request.setIssueDescription(dto.getIssueDescription());
+ 
+        logger.info("Saving new assistance request for userId: {}", dto.getUserId());
+        return repo.save(request);
+    }
+ 
+    /**
+     * Updates the status of an existing assistance request.
+     */
+    public AssistanceRequest updateStatus(Integer requestId, String status) {
+        AssistanceRequest req = repo.findById(requestId)
+                .orElseThrow(() -> new ResourceNotFoundException("Request not found: " + requestId));
+        req.setStatus(status);
+        logger.info("Updated status for requestId {} to {}", requestId, status);
+        return repo.save(req);
+    }
+ 
+    /**
+     * Fetches all assistance records for a specific user.
+     */
+    public List<AssistanceRequest> getByUser(Integer userId) {
+        logger.info("Fetching assistance list for userId: {}", userId);
+        return repo.findByUserId(userId);
+    }
+}
+ 
+
+
+
+
+package com.example.travelinsuranceservice.service;
+ 
+import com.example.travelinsuranceservice.client.BookingClient;
+import com.example.travelinsuranceservice.client.UserClient;
+import com.example.travelinsuranceservice.dto.*;
+import com.example.travelinsuranceservice.exception.*;
+import com.example.travelinsuranceservice.model.Insurance;
+import com.example.travelinsuranceservice.repository.InsuranceRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+ 
+import java.util.List;
+ 
+/**
+ * Business logic for managing Insurance operations.
+ */
+@Service
+public class InsuranceService {
+ 
+    private static final Logger logger = LoggerFactory.getLogger(InsuranceService.class);
+ 
+    @Autowired
+    private InsuranceRepository repo;
+ 
+    @Autowired
+    private UserClient userClient;
+ 
+    @Autowired
+    private BookingClient bookingClient;
+ 
+    /**
+     * Creates a new insurance after validating userId via UserClient.
+     */
+    public Insurance createInsurance(InsuranceRequestDTO dto) {
+        logger.info("Validating userId: {}", dto.getUserId());
+        if (userClient.getUserById(dto.getUserId()) == null) {
+            logger.error("Invalid userId: {}", dto.getUserId());
+            throw new InvalidInputException("Invalid user ID: " + dto.getUserId());
+        }
+ 
+        Insurance insurance = new Insurance();
+        insurance.setUserId(dto.getUserId());
+        insurance.setCoverageType(dto.getCoverageType());
+ 
+        logger.info("Saving insurance for userId {}", dto.getUserId());
+        return repo.save(insurance);
+    }
+ 
+    /**
+     * Updates insurance with bookingId after Booking module creates it.
+     */
+    public Insurance updateBookingId(Integer insuranceId, Integer bookingId) {
+        Insurance insurance = repo.findById(insuranceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Insurance not found: " + insuranceId));
+ 
+        BookingDTO booking = bookingClient.getBookingById(bookingId);
+        if (booking == null) {
+            logger.error("Invalid booking ID: {}", bookingId);
+            throw new InvalidInputException("Invalid booking ID: " + bookingId);
+        }
+ 
+        insurance.setBookingId(bookingId);
+        logger.info("Linked bookingId {} to insuranceId {}", bookingId, insuranceId);
+        return repo.save(insurance);
+    }
+ 
+    /**
+     * Updates the status of an insurance policy.
+     */
+    public Insurance updateStatus(Integer insuranceId, String status) {
+        Insurance insurance = repo.findById(insuranceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Insurance not found: " + insuranceId));
+        insurance.setStatus(status);
+        logger.info("Updated insurance status for {} to {}", insuranceId, status);
+        return repo.save(insurance);
+    }
+ 
+    /**
+     * Returns all insurance records for a given user.
+     */
+    public List<Insurance> getUserInsurance(Integer userId) {
+        logger.info("Fetching insurance list for userId: {}", userId);
+        return repo.findByUserId(userId);
+    }
+}
+ 
+
+
+
+
+spring.application.name=TravelInsuranceService
+
+# MySQL database connection
+spring.datasource.url=jdbc:mysql://localhost:3306/insurance_db
+spring.datasource.username=root
+spring.datasource.password=root
+ 
+# Hibernate will create and update tables based on entity classes
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
+ 
+# App port
+server.port=8085
+
+#Eureka Registration
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka
+eureka.instance.prefer-ip-address=true
+ 
+ #Feign Configuration
+ spring.cloud.openfeign.client.default.connectTimeout=5000
+ spring.cloud.openfeign.client.default.readTimeout=5000
+ 
+
+
+
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>3.1.12</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.example</groupId>
+	<artifactId>TravelInsuranceService</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>TravelInsuranceService</name>
+	<description>Demo project for Spring Boot</description>
+	<url/>
+	<licenses>
+		<license/>
+	</licenses>
+	<developers>
+		<developer/>
+	</developers>
+	<scm>
+		<connection/>
+		<developerConnection/>
+		<tag/>
+		<url/>
+	</scm>
+	<properties>
+		<java.version>17</java.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-openfeign</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.mysql</groupId>
+			<artifactId>mysql-connector-j</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>2022.0.5</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
+
+
+
+
+
+
+
+
+
+package com.example.discoveryserver;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
+
+@SpringBootApplication //basic springboot setup
+@EnableEurekaServer	//Tells spring that this is a eureka server
+public class DiscoveryServerApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(DiscoveryServerApplication.class, args);
+	}
+
+}
+
+
+
+
+
+package com.example.apigateway;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+
+@SpringBootApplication
+@EnableDiscoveryClient //Enables Eureka client functionality
+public class ApiGatewayApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(ApiGatewayApplication.class, args);
+	}
+
+}
+
+
+
+
+package com.example.apigateway.config;
+
+import org.springframework.cloud.gateway.route.RouteLocator;
+import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class GatewayRoutesConfig {
+	
+	@Bean
+	public RouteLocator gatewayRoutes(RouteLocatorBuilder builder) {
+		return builder.routes()
+				// Route to user-service
+				.route("usermanagement-service", route -> route
+					    .path("/api/users/**")
+					    
+					    .uri("lb://usermanagement-service")) // send to service named "usermanagement-service"
+				
+		
+				// Routes for Travel Package Management Service
+				.route("travel-package-management", route -> route
+						.path("/api/packages/**")
+			    
+						.uri("lb://travel-package-management")) // send to service named "travel-package-management"
+				
+				// Routes for Travel Insurance Service
+				.route("TravelInsurance", route -> route
+						.path("/api/insurance/**")
+			    
+						.uri("lb://TravelInsuranceService")) // send to service named "TravelInsuranceService"
+				
+				// Routes for Travel Assistance Service
+				.route("TravelAsssistance", route -> route
+						.path("/api/assistance/**")
+			    
+						.uri("lb://TravelInsuranceService")) // send to service named "TravelInsuranceService"
+				
+
+				// Route to reviews-service
+				.route("reviews-service", route -> route
+					    .path("/api/reviews/**")
+					    
+					    .uri("lb://RatingsAndReview"))  // send to service named "ratings-and-review-service"
+				// Route to review-service
+				.route("agent-responses-service", route -> route
+					    .path("/api/agent-responses/**")
+					    
+					    .uri("lb://RatingsAndReview")) // send to service named "ratings-and-review-service"
+				// Route to Booking and Payment Module
+				.route("booking-service", route -> route
+					    .path("/api/bookings/**")
+					    
+					    .uri("lb://TravelBooking_PaymentModule"))  // send to service named "TravelBooking_PaymentModule"
+				// Route to payment end points
+				.route("payment-service", route -> route
+					    .path("/api/payments/**")
+					    
+					    .uri("lb://TravelBooking_PaymentModule")) // send to service named "TravelBooking_PaymentModule"
+
+				.build(); // Only one build() at the end
+
+						
+	}
+
+}
+
+
+
+
+
+
+#port where api-gateway will run
+server.port=8080
+
+#register with eureka
+spring.application.name=api-gateway
+#tells the location of eureka to register apigateway into it
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka
+# Enable detailed debug logging for Spring Cloud Gateway components.
+# This helps trace how requests are routed, filtered, and processed.
+logging.level.org.springframework.cloud.gateway=DEBUG
+
+# Enable debug logging for the underlying Netty HTTP client used by the gateway.
+# Useful for inspecting low-level HTTP request and response details.
+logging.level.reactor.netty.http.client=DEBUG
+
+eureka.instance.prefer-ip-address=true
+
+spring.main.web-application-type=reactive
+#-------------
+# Define route for usermanagement-service
+spring.cloud.gateway.routes[0].id=usermanagement-service
+ 
+# Send matching requests to Eureka-registered service named usermanagement-service
+spring.cloud.gateway.routes[0].uri=lb://usermanagement-service
+ 
+# Match both /api/users/** and /api/auth/** to forward to the usermanagement-service
+spring.cloud.gateway.routes[0].predicates[0]=Path=/api/users/**,/api/auth/**
+#---------------
+# Define route for usermanagement-service
+spring.cloud.gateway.routes[1].id=travel-package-management
+ 
+# Send matching requests to Eureka-registered service named usermanagement-service
+spring.cloud.gateway.routes[1].uri=lb://travel-package-management
+ 
+# Match both /api/users/** and /api/auth/** to forward to the usermanagement-service
+spring.cloud.gateway.routes[1].predicates[0]=Path=/api/packages/**
+
+
+# New route for Ratings and Review service
+spring.cloud.gateway.routes[2].id=RatingsAndReview
+spring.cloud.gateway.routes[2].uri=lb://RatingsAndReview
+spring.cloud.gateway.routes[2].predicates[0]=Path=/api/reviews/**,/api/agent-responses/**
+
+# New route for Travel Insurance Service
+spring.cloud.gateway.routes[3].id=TravelInsuranceService
+spring.cloud.gateway.routes[3].uri=lb://TravelInsuranceService
+spring.cloud.gateway.routes[3].predicates[0]=Path=/api/insurance/**,/api/assistance/**
+
+
+# New route for TravelBooking_PaymentModule
+# Route to Booking service
+spring.cloud.gateway.routes[4].id=TravelBooking_PaymentModule
+spring.cloud.gateway.routes[4].uri=lb://TravelBooking_PaymentModule
+spring.cloud.gateway.routes[4].predicates[0]=Path=/api/bookings/**,/api/payments/**
+
+
+
+
+#CORS Config for Angular App
+spring.cloud.gateway.globalcors.corsConfigurations.[/**].allowedOrigins=http://localhost:4200
+spring.cloud.gateway.globalcors.corsConfigurations.[/**].allowedMethods=GET,POST,PUT,DELETE,OPTIONS
+spring.cloud.gateway.globalcors.corsConfigurations.[/**].allowedHeaders=*
+spring.cloud.gateway.globalcors.corsConfigurations.[/**].allowCredentials=true
+
