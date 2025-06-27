@@ -1,87 +1,4 @@
-package com.example.travelinsuranceservice.model;
- 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import lombok.Data;
-import org.hibernate.annotations.CreationTimestamp;
- 
-import java.time.LocalDateTime;
- 
-/**
- * Entity representing an insurance policy for travel booking.
- */
-@Entity
-@Data
-public class Insurance {
- 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer insuranceId;
- 
-    @NotNull(message = "User ID cannot be null")
-    private Long userId;
- 
-    // Booking ID will be updated later from the Booking module
-    @Column(name="booking_id")
-    private Long bookingId;
- 
-    @Enumerated(EnumType.STRING)
-    @NotNull(message = "Coverage type is required")
-    private CoverageType coverageType;
- 
-    // Fields populated based on coverageType at creation
-    private String coverageDetails;
-    private Double price;
-    private Double claimableAmount;
- 
-    // Default Status Pending
-    @Column(nullable=false)
-    private String issuanceStatus = "PENDING";
-    
-    @Column(nullable=false)
-    private String provider="Secure Travel Insurance Co.";
- 
-    @CreationTimestamp
-    private LocalDateTime createdAt;
- 
-    /**
-     * Automatically sets coverageDetails, price, and claimableAmount
-     * before saving to DB based on the selected coverageType.
-     */
-    @PrePersist
-    public void setDefaults() {
-        if (coverageType != null) {
-            this.coverageDetails = coverageType.getCoverageDetails();
-            this.price = coverageType.getPrice();
-            this.claimableAmount = coverageType.getClaimableAmount();
-        }
-    }
-}
- package com.example.travelinsuranceservice.repository;
- 
-import com.example.travelinsuranceservice.model.Insurance;
-import org.springframework.data.jpa.repository.JpaRepository;
- 
-import java.util.List;
- 
-/**
- * Repository interface for Insurance entity.
- * Extends JpaRepository to get CRUD operations automatically.
- */
-public interface InsuranceRepository extends JpaRepository<Insurance, Integer> {
- 
-    /**
-     * Custom finder method to retrieve all insurance records for a given userId.
-     * Spring Data JPA automatically generates the query from the method name.
-     *
-     * @param userId ID of the user
-     * @return List of Insurance objects associated with the user
-     */
-    List<Insurance> findByUserId(Long userId);
-
-	boolean existsByInsuranceId(Long insuranceId);
-}
- package com.example.travelinsuranceservice.service;
+package com.example.travelinsuranceservice.service;
 
 import com.example.travelinsuranceservice.client.BookingClient;
 import com.example.travelinsuranceservice.client.UserClient;
@@ -117,25 +34,33 @@ public class InsuranceService {
     private BookingClient bookingClient;
 
     /**
-     * Creates new insurance with default status "PENDING".
-     * Called when user selects insurance during booking.
+     * Creates new insurance only if user doesn't already have one.
      */
     public Insurance createInsurance(InsuranceRequestDTO dto) {
-        logger.info("Creating insurance for userId: {}", dto.getUserId());
-
+    	logger.info("Creating insurance for userId: {}", dto.getUserId());
+ 
+        // Step 1: Validate user exists (using Feign client)
         if (userClient.getUserById(dto.getUserId()) == null) {
             logger.error("Invalid user ID: {}", dto.getUserId());
             throw new InvalidInputException("Invalid user ID: " + dto.getUserId());
         }
-
+ 
+        // Step 2: Check if insurance already exists
+        List<Insurance> existing = repo.findByUserId(dto.getUserId());
+        if (!existing.isEmpty()) {
+            logger.warn("Insurance already exists for user ID {}", dto.getUserId());
+            throw new InvalidInputException("Insurance already exists for user.");
+        }
+ 
+        // Step 3: Create insurance
         Insurance insurance = new Insurance();
         insurance.setUserId(dto.getUserId());
         insurance.setCoverageType(CoverageType.valueOf(dto.getCoverageType().toUpperCase()));
-
-        // issuanceStatus = "PENDING" is default in entity
-
+ 
+        // Note: other values (price, claim, details, status) set automatically via @PrePersist
         Insurance saved = repo.save(insurance);
         logger.info("Insurance created with ID: {}", saved.getInsuranceId());
+ 
         return saved;
     }
 
@@ -170,6 +95,25 @@ public class InsuranceService {
         logger.info("Returning insurance price {} for insuranceId {}", insurance.getPrice(), insurance.getInsuranceId());
         return insurance.getPrice();
     }
+    
+    public double getInsurancePriceByInsuranceId(Integer insuranceId) {
+        logger.info("Fetching insurance price for insuranceId: {}", insuranceId);
+
+        Insurance insurance = repo.findById(insuranceId).orElse(null);
+
+        if (insurance == null) {
+            logger.warn("No insurance found for insuranceId {}", insuranceId);
+            return 0.0;
+        }
+
+        if ("CANCELLED".equalsIgnoreCase(insurance.getIssuanceStatus())) {
+            logger.info("Insurance is cancelled for insuranceId {}", insuranceId);
+            return 0.0;
+        }
+
+        logger.info("Returning insurance price {} for insuranceId {}", insurance.getPrice(), insuranceId);
+        return insurance.getPrice();
+    }
 
     /**
      * Called by Booking module after booking/payment is successful.
@@ -195,7 +139,7 @@ public class InsuranceService {
     /**
      * Validates if the given insurance ID exists in the repository.
      */
-    public boolean validateInsuranceId(Long insuranceId) {
+    public boolean validateInsuranceId(Integer insuranceId) {
         return repo.existsByInsuranceId(insuranceId);
     }
 }
@@ -216,7 +160,7 @@ import java.util.*;
 import java.util.stream.Collectors;
  
 /**
- * Controller exposing REST endpoints for insurance operations.
+ * Controller exposing REST end-points for insurance operations.
  */
 @RestController
 @RequestMapping("/api/insurance")
@@ -305,13 +249,101 @@ public class InsuranceController {
     logger.info("Insurance price for userId {} is {}", userId, price);
         return ResponseEntity.ok(price);
     }
+    /**
+     * GET /api/insurance/price/{insuranceId}
+     * Fetch insurance price selected by insuranceId
+     */
+    @GetMapping("/price/insurance/{insuranceId}")
+    public ResponseEntity<Double> getInsurancePriceByInsuranceId(@PathVariable Integer insuranceId) {
+        logger.info("GET /api/insurance/price/insurance/{} - Fetching insurance price by insuranceId", insuranceId);
+
+        double price = service.getInsurancePriceByInsuranceId(insuranceId);
+
+        if (price <= 0) {
+            logger.warn("No insurance found for insuranceId: {}", insuranceId);
+            return ResponseEntity.notFound().build();
+        }
+
+        logger.info("Insurance price for insuranceId {} is {}", insuranceId, price);
+        return ResponseEntity.ok(price);
+    }
     
     @GetMapping("/validate/{insuranceId}")
-    public ResponseEntity<Boolean> validateInsurance(@PathVariable Long insuranceId) {
+    public ResponseEntity<Boolean> validateInsurance(@PathVariable Integer insuranceId) {
         boolean exists = service.validateInsuranceId(insuranceId);
         return ResponseEntity.ok(exists);
     }
 
+}
+
+ package com.example.travelinsuranceservice.repository;
+ 
+import com.example.travelinsuranceservice.model.Insurance;
+import org.springframework.data.jpa.repository.JpaRepository;
+ 
+import java.util.List;
+import java.util.Optional;
+ 
+/**
+ * Repository interface for Insurance entity.
+ * Extends JpaRepository to get CRUD operations automatically.
+ */
+public interface InsuranceRepository extends JpaRepository<Insurance, Integer> {
+ 
+    /**
+     * Custom finder method to retrieve all insurance records for a given userId.
+     * Spring Data JPA automatically generates the query from the method name.
+     *
+     * @param userId ID of the user
+     * @return List of Insurance objects associated with the user
+     */
+    List<Insurance> findByUserId(Long userId);
+
+	boolean existsByInsuranceId(Integer insuranceId);
+
+	Optional<Insurance> findById(Integer insuranceId);
+}
+ package com.example.travelinsuranceservice.client;
+ 
+import com.example.travelinsuranceservice.dto.BookingDTO;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+ 
+/**
+* Feign client to communicate with the Booking module.
+*/
+@FeignClient(name = "TravelBooking-PaymentModule")
+public interface BookingClient {
+ 
+    /**
+     * Fetch booking details by bookingId from the Booking module.
+     * @param bookingId the ID of the booking
+     * @return the BookingDTO containing booking information
+     */
+    @GetMapping("/api/bookings/internal/{id}")
+    BookingDTO getBookingById(@PathVariable("id") Long bookingId);
+}
+package com.example.travelinsuranceservice.client;
+ 
+import com.example.travelinsuranceservice.dto.UserDTO;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+ 
+/**
+ * Feign client to communicate with the User module.
+ */
+@FeignClient(name = "usermanagement-service")
+public interface UserClient {
+ 
+    /**
+     * Fetch user details by userId from the User module.
+     * @param long1 the ID of the user
+     * @return the UserDTO containing user information
+     */
+    @GetMapping("/api/users/internal/customer/{id}")
+    UserDTO getUserById(@PathVariable("id") Long userId);
 }
 
  
