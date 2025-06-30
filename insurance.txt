@@ -1,0 +1,116 @@
+import { Component, OnInit } from '@angular/core';
+import { InsuranceService } from '../services/insurance.service';
+import { CommonModule } from '@angular/common';
+
+@Component({
+  standalone: true,
+  selector: 'app-customer-insurance',
+  imports: [CommonModule],
+  templateUrl: './customer-insurance.component.html',
+  styleUrls: ['./customer-insurance.component.css']
+})
+export class CustomerInsuranceComponent implements OnInit {
+  userId = Number(localStorage.getItem("userId"));
+  insurances: any[] = [];
+
+  constructor(private service: InsuranceService) {}
+
+  ngOnInit() {
+    this.service.getMyInsurances(this.userId).subscribe(res => {
+      this.insurances = res;
+    });
+  }
+}
+<div class="container">
+  <h2>My Insurances</h2>
+
+  <div class="content-box">
+    <div *ngIf="insurances.length === 0" class="no-insurance">
+      No insurance taken yet.
+    </div>
+
+    <div *ngFor="let ins of insurances" class="card">
+      <div class="status-indicator" [ngClass]="{
+        'status-pending': ins.issuanceStatus === 'Pending',
+        'status-issued': ins.issuanceStatus === 'Issued'
+      }">
+        {{ ins.issuanceStatus }}
+      </div>
+      <div>
+        <p><b>Coverage:</b> {{ ins.coverageType }}</p>
+        <p><b>Details:</b> {{ ins.coverageDetails }}</p>
+        <p><b>Price:</b> ₹{{ ins.price }}</p>
+        <p><b>Claimable:</b> ₹{{ ins.claimableAmount }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+:host {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f0f8ff;
+  min-height: 100vh;
+  padding: 40px 20px;
+}
+
+.container {
+  background-color: #ffffff;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 255, 0.2);
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+}
+
+h2 {
+  color: #004080;
+  margin-bottom: 20px;
+}
+
+.content-box {
+  width: 100%;
+}
+
+.no-insurance {
+  font-size: 16px;
+  color: #666;
+  margin-top: 20px;
+}
+
+.card {
+  background-color: #ffffff;
+  border: 1px solid #cce0ff;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 255, 0.1);
+  text-align: left;
+  position: relative;
+}
+
+.card p {
+  margin: 8px 0;
+  font-size: 15px;
+  color: #333;
+}
+
+.status-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: bold;
+  color: white;
+}
+
+.status-pending {
+  background-color: #a9a9a9;
+}
+
+.status-issued {
+  background-color: #28a745;
+}
