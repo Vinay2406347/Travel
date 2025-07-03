@@ -1,0 +1,783 @@
+// Import Routes type from Angular Router
+import { provideRouter } from '@angular/router';
+import { Routes } from '@angular/router';
+import { LoginComponent } from './login/login.component';
+import { LandingComponent } from './landing/landing.component';
+import { RegisterComponent } from './register/register.component';
+import { AdminUserManageComponent } from './admin-user-manage/admin-user-manage.component';
+import { CustomerHelpComponent } from './customer-help/customer-help.component';
+import { CustomerInsuranceComponent } from './customer-insurance/customer-insurance.component';
+import { LandingNavbarComponent } from './landing-navbar/landing-navbar.component';
+import { CustomerDashboardComponent } from './customer-dashboard/customer-dashboard.component';
+
+import { PackageDetailsComponent } from './package-details/package-details.component'; // <--- ADD THIS LINE
+import { ReviewDashboardComponent } from './review-dashboard/review-dashboard.component'; // <--- ADD THIS LINE
+import { BookingComponent } from './booking/booking.component';
+import { PaymentComponent } from './payment/payment.component';
+import { PaymentSuccessComponent } from './payment-success/payment-success.component';
+import { MyBookingsComponent } from './my-bookings/my-bookings.component';
+
+export const routes: Routes = [
+  { path: '', component: LandingComponent },
+  { path: 'register', component: RegisterComponent },
+  { path: 'login', component: LoginComponent },
+
+  { path: 'packages/:packageId', component: PackageDetailsComponent },     
+  { path: 'review-dashboard/:packageId', component: ReviewDashboardComponent }, 
+
+  { path: 'packages/:packageId', component: PackageDetailsComponent },     // <--- ADD THIS LINE
+ 
+
+  // Dashboard placeholders
+  { path:'review-dashboard/:packageId',loadComponent:() => import('./review-dashboard/review-dashboard.component').then(m =>m.ReviewDashboardComponent)},
+  { path: 'admin-dashboard', loadComponent: () => import('./admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent) },
+  { path: 'agent-dashboard', loadComponent: () => import('./agent-dashboard/agent-dashboard.component').then(m => m.AgentDashboardComponent) },
+  { path: 'customer-dashboard', loadComponent: () => import('./customer-dashboard/customer-dashboard.component').then(m => m.CustomerDashboardComponent) },
+  { path: 'my-profile', loadComponent: () => import('./my-profile/my-profile.component').then(m => m.MyProfileComponent) },
+  { path: 'admin/users', loadComponent: () => import('./admin-user-manage/admin-user-manage.component').then(m => m.AdminUserManageComponent) },
+  { path: 'update-profile', loadComponent: () => import('./update-profile/update-profile.component').then(m => m.UpdateProfileComponent) },
+  { path: 'admin-user-manage' , loadComponent: () => import('./admin-user-manage/admin-user-manage.component').then(m =>AdminUserManageComponent)},
+  { path: 'admin/agent-packages/:id', loadComponent: () => import('./admin-agent-packages/admin-agent-packages.component').then(m => m.AdminAgentPackagesComponent)},
+  { path: 'forgot-password', loadComponent: () => import('./forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent)},
+  //for view booking option in admin registered list
+  {
+    path: 'admin/customer-bookings/:id',
+    loadComponent: () =>
+      import('./admin-customer-bookings/admin-customer-bookings.component').then(
+        m => m.AdminCustomerBookingsComponent
+      )
+  },
+ 
+ 
+  //For creating new package by agent
+  { path: 'create-package', loadComponent:() => import('./agent-create-package/agent-create-package.component').then(m=> m.AgentCreatePackageComponent)},
+ 
+  //for landing navbar
+  { path: 'about', loadComponent: () => import('./about/about.component').then(m => m.AboutComponent) },
+{ path: 'contact-us', loadComponent: () => import('./contact-us/contact-us.component').then(m => m.ContactUsComponent) },
+ 
+ 
+ 
+  //For package editing/updating in agent dashboard
+  { path: 'edit-package/:id', loadComponent:() => import('./edit-package/edit-package.component').then(m => m.EditPackageComponent)},
+ 
+  //For viewing the details of the package by the agent(retrieve)
+  { path: 'view-package/:id', loadComponent:() => import('./view-package/view-package.component').then(m => m.ViewPackageComponent)},
+ 
+  //for help and insurance
+ 
+  {
+    path: 'customer-help',
+    loadComponent: () =>
+      import('./customer-help/customer-help.component').then(
+        m => m.CustomerHelpComponent
+      ),
+  },
+  {
+    path: 'customer-insurance',
+    loadComponent: () =>
+      import('./customer-insurance/customer-insurance.component').then(
+        m => m.CustomerInsuranceComponent
+      ),
+  },
+  //For slecting insurance after choosing package
+  {
+    path: 'insurance-selection',
+    loadComponent: () =>
+      import('./insurance-selection/insurance-selection.component').then(
+        m => m.InsuranceSelectionComponent
+      ),
+  },
+ 
+  //For agent to see the reviews and respond
+  {
+    path: 'agent-package-reviews/:packageId',
+    loadComponent:() => import('./agent-package-reviews/agent-package-reviews.component').then(
+      m => m.AgentPackageReviewsComponent)
+  },
+
+
+  //for showing a customer's bookings
+  {
+    path: 'my-bookings', // The URL path (e.g., yourdomain.com/my-bookings)
+    loadComponent: () =>
+      import('./my-bookings/my-bookings.component').then(
+        m => m.MyBookingsComponent // This loads the component lazily
+      ),
+  },
+
+
+
+  { path: 'booking', component: BookingComponent },
+  { path: 'payment', component: PaymentComponent },
+  { path: 'payment-success', component: PaymentSuccessComponent },
+  { path: 'my-bookings', component: MyBookingsComponent },
+ 
+ 
+
+];
+ 
+ 
+ <router-outlet></router-outlet>
+ 
+ import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+
+@Component({
+  selector: 'app-root',
+  imports: [RouterOutlet],
+  templateUrl: './app.component.html',
+  styleUrl: './app.component.css'
+})
+export class AppComponent {
+  title = 'travel-booking-system-frontend';
+}
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>TravelBookingSystemFrontend</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+</head>
+<body>
+  <app-root></app-root>
+</body>
+</html>
+
+
+import { Component, OnInit } from '@angular/core';
+import { InsuranceService } from '../services/insurance.service';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+
+@Component({
+  standalone: true,
+  selector: 'app-customer-help',
+  imports: [CommonModule, FormsModule],
+  templateUrl: './customer-help.component.html',
+  styleUrls: ['./customer-help.component.css']
+})
+export class CustomerHelpComponent implements OnInit {
+  userId = Number(localStorage.getItem("userId") || 0);
+  queries: any[] = [];
+  newQuery = '';
+  showMessage = '';
+  hasTyped = false;
+
+  constructor(private router: Router,private service: InsuranceService) {}
+
+
+  ngOnInit() {
+    this.loadQueries();
+  }
+
+  loadQueries() {
+    this.service.getAssistanceQueries(this.userId).subscribe({
+      next: (res) => this.queries = res,
+      error: (err) => {
+        console.error('Error loading queries:', err);
+        this.showMessage = '❌ Failed to load queries.';
+      }
+    });
+  }
+
+  onInputChange() {
+    this.hasTyped = true;
+    const trimmedQuery = this.newQuery.trim();
+    if (trimmedQuery.length < 30) {
+      this.showMessage = '⚠️ Please describe your issue in at least 30 characters.';
+    } else {
+      this.showMessage = '';
+    }
+  }
+
+  submitQuery() {
+    const trimmedQuery = this.newQuery.trim();
+    if (trimmedQuery.length < 30) {
+      this.showMessage = '⚠️ Please describe your issue in at least 30 characters.';
+      return;
+    }
+
+    this.service.addQuery(this.userId, trimmedQuery).subscribe({
+      next: () => {
+        this.showMessage = '✅ Query submitted!';
+        this.newQuery = '';
+        this.hasTyped = false;
+        this.loadQueries();
+      },
+      error: (err) => {
+        console.error('Submission error:', err);
+        this.showMessage = '❌ Failed to submit query. Please try again.';
+      }
+    });
+  }
+  goBack() {
+    this.router.navigate(['/customer-dashboard']);
+  }
+}
+
+
+
+
+
+<div class="card-container">
+  <h2 class="centered-heading">User Queries</h2>
+
+  <div *ngIf="queries.length === 0" class="no-query centered-text">
+    No queries raised yet.
+  </div>
+
+  <ul class="query-list">
+    <li *ngFor="let query of queries" class="query-item">
+      <div class="status-top-right" [ngClass]="{
+        'active': query.status === 'Active',
+        'resolved': query.status === 'Resolved'
+      }">
+        {{ query.status }}
+      </div>
+      <div class="query-details">
+        <b>Assistance ID:</b> {{ query.requestId }}<br>
+        <b>Query:</b> {{ query.issueDescription }}<br>
+        <b>Submitted At:</b> {{ query.requestTimestamp | date:'medium' }}
+      </div>
+    </li>
+  </ul>
+
+  <hr>
+
+  <h3 class="centered-heading">Add New Query</h3>
+  <div class="centered-form">
+    <textarea
+      [(ngModel)]="newQuery"
+      (input)="onInputChange()"
+      placeholder="Describe your issue...">
+    </textarea><br>
+
+    <p class="message" *ngIf="hasTyped && showMessage">{{ showMessage }}</p>
+    <button (click)="submitQuery()">Submit</button>
+  </div>
+  <div class="back-button-wrapper">
+    <button class="back-button" (click)="goBack()">← Back</button>
+  </div>   
+</div>
+
+
+:host {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #eef6ff;
+  min-height: 100vh;
+  width: 100%; 
+  padding: 40px 20px;
+  box-sizing: border-box; 
+}
+
+.card-container {
+  max-width: 700px; /* Wider container */
+  width: 100%; 
+  margin: 40px auto;
+  padding: 30px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+
+.centered-heading {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 24px;
+  color: #004080;
+}
+
+.centered-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+textarea {
+  width: 100%;
+  max-width: 600px;
+  height: 50px;
+  padding: 10px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  resize: vertical;
+}
+
+button {
+  background-color: #0078d4;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  margin-top: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #005fa3;
+}
+
+.query-list {
+  list-style: none;
+  padding: 0;
+}
+
+.query-item {
+  position: relative;
+  background-color: #f9f9f9;
+  border-left: 5px solid #0078d4;
+  margin-bottom: 20px;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.query-item:hover {
+  transform: translateY(-10px) scale(1.02);
+  box-shadow: 0 12px 24px rgba(0, 120, 212, 0.2);
+  background-color: #f0f8ff;
+}
+
+.status-top-right {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: bold;
+  color: white;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+.status-top-right.active {
+  background-color: #28a745;
+}
+
+.status-top-right.resolved {
+  background-color: #b0b0b0;
+}
+
+.message {
+  color: #d9534f;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.back-button-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.back-button {
+  background-color: #0078d4;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  margin-top: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+
+import { Component, OnInit } from '@angular/core';
+import { InsuranceService } from '../services/insurance.service';
+import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
+
+@Component({
+  standalone: true,
+  selector: 'app-customer-insurance',
+  imports: [CommonModule],
+  templateUrl: './customer-insurance.component.html',
+  styleUrls: ['./customer-insurance.component.css']
+})
+export class CustomerInsuranceComponent implements OnInit {
+  userId = Number(localStorage.getItem("userId"));
+  insurances: any[] = [];
+
+  constructor(private router: Router,private service: InsuranceService) {}
+
+  ngOnInit() {
+    this.service.getMyInsurances(this.userId).subscribe(res => {
+      this.insurances = res;
+    });
+  }
+  goBack() {
+    this.router.navigate(['/customer-dashboard']);
+  }
+}
+
+
+<div class="insurance-container">
+  <h2>My Insurances</h2>
+
+  <div *ngIf="insurances.length === 0" class="no-insurance-message">
+    No insurances taken.
+  </div>
+
+  <div *ngFor="let ins of insurances" class="card">
+    <div class="status-indicator" [ngClass]="{
+      'status-pending': ins.issuanceStatus === 'PENDING',
+      'status-issued': ins.issuanceStatus === 'ISSUED'
+    }">
+      {{ ins.issuanceStatus.toLowerCase() | titlecase }}
+    </div>
+
+    <div class="card-body">
+      <p><strong>Insurance ID:</strong> {{ ins.insuranceId }}</p>
+      <p><strong>Booking ID:</strong> {{ ins.bookingId }}</p>
+      <p><strong>Coverage:</strong> {{ ins.coverageType }}</p>
+      <p><strong>Details:</strong> {{ ins.coverageDetails }}</p>
+      <p><strong>Price:</strong> ₹{{ ins.price }}</p>
+      <p><strong>Claimable:</strong> ₹{{ ins.claimableAmount }}</p>
+    </div>
+  </div>
+  <div class="back-button-wrapper">
+    <button class="back-button" (click)="goBack()">← Back</button>
+  </div>   
+</div>
+
+:host {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f0f8ff;
+  min-height: 100vh;
+  padding: 40px 20px;
+}
+
+.insurance-container {
+  background-color: #ffffff;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 255, 0.2);
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+}
+
+h2 {
+  color: #004080;
+  margin-bottom: 20px;
+}
+
+.no-insurance-message {
+  font-size: 16px;
+  color: #666;
+  margin-top: 20px;
+}
+
+.card {
+  background-color: #ffffff;
+  border: 1px solid #cce0ff;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 255, 0.1);
+  text-align: left;
+  position: relative;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-10px) scale(1.02);
+  box-shadow: 0 12px 24px rgba(0, 0, 255, 0.2);
+  background-color: #e9eef1;
+}
+
+.card p {
+  margin: 8px 0;
+  font-size: 15px;
+  color: #333;
+}
+
+.status-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: bold;
+  color: white;
+}
+
+.status-pending {
+  background-color: #a9a9a9;
+}
+
+.status-issued {
+  background-color: #28a745;
+}
+
+.back-button-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.back-button {
+  background-color: #0078d4;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  margin-top: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+import { Component, OnInit } from '@angular/core';
+import { InsuranceService } from '../services/insurance.service';
+import { Router } from '@angular/router';
+import { CommonModule, Location } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+
+@Component({
+  standalone: true,
+  selector: 'app-insurance-selection',
+  imports: [CommonModule, FormsModule],
+  templateUrl: './insurance-selection.component.html',
+  styleUrls: ['./insurance-selection.component.css']
+})
+export class InsuranceSelectionComponent implements OnInit {
+  userId = Number(localStorage.getItem("userId") || 0);
+  selected = '';
+  plans: any[] = [];
+  error = '';
+  success = '';
+
+  constructor(private service: InsuranceService, private router: Router, private location:Location) {}
+
+  ngOnInit() {
+    this.service.getCoveragePlans().subscribe(data => this.plans = data);
+  }
+
+  onSelectionChange() {
+    if (this.selected) {
+      this.error = '';
+    }
+  }
+
+  submit() {
+    if (!this.selected) {
+      this.error = '⚠️ Please select a coverage type.';
+      this.success = '';
+      return;
+    }
+
+    this.service.getMyInsurances(this.userId).subscribe(existingInsurances => {
+      const pendingInsurance = existingInsurances.find(
+        insurance => insurance.bookingId === null
+      );
+
+      if (pendingInsurance) {
+        this.error = `⚠️ Insurance already selected with Insurance ID: ${pendingInsurance.insuranceId}. Please complete your booking.`;
+        this.success = '';
+      } else {
+        this.service.submitInsurance(this.userId, this.selected).subscribe(newInsurance => {
+          this.success = `✅ Insurance selected successfully with Insurance ID: ${newInsurance.insuranceId}!`;
+          this.error = '';
+        });
+      }
+    });
+  }
+
+  goBack(): void {
+    this.location.back();
+  }
+}
+
+
+<div class="container">
+  <h2>Select Coverage Type</h2>
+
+  <div class="plans">
+    <div class="plan-card" *ngFor="let plan of plans">
+      <div class="radio-group">
+        <input
+          type="radio"
+          name="coverage"
+          [value]="plan.coverageType"
+          [(ngModel)]="selected"
+          (change)="onSelectionChange()"
+        />
+        <label>{{ plan.coverageType }} – ₹{{ plan.price }}</label>
+      </div>
+      <p class="description">{{ plan.coverageDetails }}</p>
+    </div>
+  </div>
+
+  <p class="message error" *ngIf="error">{{ error }}</p>
+  <p class="message success" *ngIf="success">{{ success }}</p>
+
+  <div class="button-row">
+    <button (click)="submit()" aria-label="Submit Insurance Selection">Submit</button>
+    <button class="back-button" (click)="goBack()" >← Back</button>
+  </div>
+</div>
+
+
+:host {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #f0f8ff;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 700px;
+  padding: 30px;
+  background-color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 255, 0.2);
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+
+h2 {
+  color: #004080;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.plans {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.plan-card {
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.plan-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 12px 24px rgba(0, 0, 255, 0.2);
+  background-color: #f0f8ff;
+}
+
+.radio-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: bold;
+  color: #003366;
+  margin-bottom: 5px;
+}
+
+input[type="radio"] {
+  transform: scale(1.2);
+}
+
+.description {
+  margin-left: 25px;
+  font-size: 14px;
+  color: #555;
+}
+
+.message {
+  font-weight: bold;
+  margin-top: 10px;
+  text-align: center;
+}
+
+.error {
+  color: #cc0000;
+}
+
+.success {
+  color: #006600;
+}
+
+.button-row {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.button-row button {
+  background-color: #007BFF;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.button-row button:hover {
+  background-color: #0056b3;
+}
+
+.back-button {
+  background-color: #0078d4;
+}
+
+@media (max-width: 500px) {
+  .button-row {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+ 
+@Injectable({ providedIn: 'root' })
+export class BookingService {
+private api = 'http://localhost:8086/api/bookings';
+ 
+  constructor(private http: HttpClient) {}
+ 
+  createBooking(data: any): Observable<any> {
+return this.http.post<any>(this.api, data);
+  }
+ 
+  getBookingById(id: number): Observable<any> {
+    return this.http.get(`${this.api}/${id}`);
+  }
+ 
+  getBookingsByUserId(userId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.api}/internal/bookings/user/${userId}`);
+  }
+  
+  cancelBooking(bookingId: number): Observable<string> {
+    return this.http.put(`${this.api}/cancel/${bookingId}`, null, {
+      responseType: 'text'
+    });
+  }
+}
