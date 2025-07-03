@@ -140,6 +140,7 @@ public class AssistanceRequestController {
     }
 }
  
+ 
  package com.example.travelinsuranceservice.controller;
  
 import com.example.travelinsuranceservice.dto.*;
@@ -367,6 +368,7 @@ public class UserDTO {
     private String role;
 }
  
+ 
  package com.example.travelinsuranceservice.exception;
  
 import org.springframework.http.*;
@@ -414,6 +416,8 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
+ 
+ 
  package com.example.travelinsuranceservice.exception;
  
 /**
@@ -449,6 +453,7 @@ public class ResourceNotFoundException extends RuntimeException {
         super(message); // Calls parent class constructor
     }
 }
+ 
  package com.example.travelinsuranceservice.model;
  
 import jakarta.persistence.*;
@@ -491,6 +496,7 @@ public class AssistanceRequest {
         this.requestTimestamp = LocalDateTime.now();
     }
 }
+ 
  package com.example.travelinsuranceservice.model;
  
 import lombok.Getter;
@@ -524,6 +530,7 @@ public enum CoverageType {
         this.claimableAmount = claimableAmount;
     }
 }
+ 
  package com.example.travelinsuranceservice.model;
  
 import jakarta.persistence.*;
@@ -583,6 +590,8 @@ public class Insurance {
         }
     }
 }
+ 
+ 
  package com.example.travelinsuranceservice.repository;
  
 import com.example.travelinsuranceservice.model.AssistanceRequest;
@@ -604,6 +613,8 @@ public interface AssistanceRequestRepository extends JpaRepository<AssistanceReq
      */
     List<AssistanceRequest> findByUserId(Long userId);
 }
+ 
+ 
  package com.example.travelinsuranceservice.repository;
  
 import com.example.travelinsuranceservice.model.Insurance;
@@ -635,6 +646,8 @@ public interface InsuranceRepository extends JpaRepository<Insurance, Integer> {
 	
 	Optional<Insurance> findByBookingId(Long bookingId);
 }
+ 
+ 
  package com.example.travelinsuranceservice.service;
  
 import com.example.travelinsuranceservice.client.UserClient;
@@ -700,6 +713,8 @@ public class AssistanceRequestService {
         return repo.findByUserId(userId);
     }
 }
+ 
+ 
  package com.example.travelinsuranceservice.service;
 
 import com.example.travelinsuranceservice.client.BookingClient;
@@ -865,5 +880,1328 @@ public class InsuranceService {
         return repo.existsByInsuranceId(insuranceId);
     }
 }
+
+spring.application.name=TravelInsuranceService
+
+# MySQL database connection
+spring.datasource.url=jdbc:mysql://localhost:3306/insurance_db
+spring.datasource.username=root
+spring.datasource.password=root
+ 
+# Hibernate will create and update tables based on entity classes
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
+ 
+# App port
+server.port=8085
+
+#Eureka Registration
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka
+eureka.instance.prefer-ip-address=true
+ 
+ #Feign Configuration
+ spring.cloud.openfeign.client.default.connectTimeout=5000
+ spring.cloud.openfeign.client.default.readTimeout=5000
+ 
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>3.1.12</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.example</groupId>
+	<artifactId>TravelInsuranceService</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>TravelInsuranceService</name>
+	<description>Demo project for Spring Boot</description>
+	<url/>
+	<licenses>
+		<license/>
+	</licenses>
+	<developers>
+		<developer/>
+	</developers>
+	<scm>
+		<connection/>
+		<developerConnection/>
+		<tag/>
+		<url/>
+	</scm>
+	<properties>
+		<java.version>17</java.version>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-openfeign</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.mysql</groupId>
+			<artifactId>mysql-connector-j</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>2022.0.5</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
+
+
+package com.example.discoveryserver;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
+
+@SpringBootApplication //basic springboot setup
+@EnableEurekaServer	//Tells spring that this is a eureka server
+public class DiscoveryServerApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(DiscoveryServerApplication.class, args);
+	}
+
+}
+
+spring.application.name=discovery-server
+
+#port to run Eureka Server
+server.port=8761
+#Telling spring cloud not to register itself since its the server
+eureka.client.register-with-eureka=false
+eureka.client.fetch-registry=false
+
+
+package com.example.apigateway;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+
+@SpringBootApplication
+@EnableDiscoveryClient //Enables Eureka client functionality
+public class ApiGatewayApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(ApiGatewayApplication.class, args);
+	}
+
+}
+
+package com.example.apigateway.config;
+
+import org.springframework.cloud.gateway.route.RouteLocator;
+import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class GatewayRoutesConfig {
+	
+	@Bean
+	public RouteLocator gatewayRoutes(RouteLocatorBuilder builder) {
+		return builder.routes()
+				// Route to user-service
+				.route("usermanagement-service", route -> route
+					    .path("/api/users/**")
+					    
+					    .uri("lb://usermanagement-service")) // send to service named "usermanagement-service"
+				
+		
+				// Routes for Travel Package Management Service
+				.route("travel-package-management", route -> route
+						.path("/api/packages/**")
+			    
+						.uri("lb://travel-package-management")) // send to service named "travel-package-management"
+				
+				// Routes for Travel Insurance Service
+				.route("TravelInsurance", route -> route
+						.path("/api/insurance/**")
+			    
+						.uri("lb://TravelInsuranceService")) // send to service named "TravelInsuranceService"
+				
+				// Routes for Travel Assistance Service
+				.route("TravelAsssistance", route -> route
+						.path("/api/assistance/**")
+			    
+						.uri("lb://TravelInsuranceService")) // send to service named "TravelInsuranceService"
+				
+
+				// Route to reviews-service
+				.route("reviews-service", route -> route
+					    .path("/api/reviews/**")
+					    
+					    .uri("lb://RatingsAndReview"))  // send to service named "ratings-and-review-service"
+				// Route to review-service
+				.route("agent-responses-service", route -> route
+					    .path("/api/agent-responses/**")
+					    
+					    .uri("lb://RatingsAndReview")) // send to service named "ratings-and-review-service"
+				// Route to Booking and Payment Module
+				.route("booking-service", route -> route
+					    .path("/api/bookings/**")
+					    
+					    .uri("lb://TravelBooking-PaymentModule"))  // send to service named "TravelBooking_PaymentModule"
+				// Route to payment end points
+				.route("payment-service", route -> route
+					    .path("/api/payments/**")
+					    
+					    .uri("lb://TravelBooking-PaymentModule")) // send to service named "TravelBooking_PaymentModule"
+
+				.build(); // Only one build() at the end
+
+						
+	}
+
+}
+#port where api-gateway will run
+server.port=8080
+
+#register with eureka
+spring.application.name=api-gateway
+#tells the location of eureka to register apigateway into it
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka
+# Enable detailed debug logging for Spring Cloud Gateway components.
+# This helps trace how requests are routed, filtered, and processed.
+logging.level.org.springframework.cloud.gateway=DEBUG
+
+# Enable debug logging for the underlying Netty HTTP client used by the gateway.
+# Useful for inspecting low-level HTTP request and response details.
+logging.level.reactor.netty.http.client=DEBUG
+
+eureka.instance.prefer-ip-address=false
+eureka.instance.hostname=localhost
+
+spring.main.web-application-type=reactive
+#-------------
+# Define route for usermanagement-service
+spring.cloud.gateway.routes[0].id=usermanagement-service
+ 
+# Send matching requests to Eureka-registered service named usermanagement-service
+spring.cloud.gateway.routes[0].uri=lb://usermanagement-service
+ 
+# Match both /api/users/** and /api/auth/** to forward to the usermanagement-service
+spring.cloud.gateway.routes[0].predicates[0]=Path=/api/users/**,/api/auth/**
+#---------------
+# Define route for travel-package-management-service
+spring.cloud.gateway.routes[1].id=travel-package-management
+ 
+# Send matching requests to Eureka-registered service named travel-package-management-service
+spring.cloud.gateway.routes[1].uri=lb://travel-package-management
+ 
+# Match both /api/users/** and /api/auth/** to forward to the travel-package-management-service
+spring.cloud.gateway.routes[1].predicates[0]=Path=/api/packages/**
+
+
+# New route for Ratings and Review service
+spring.cloud.gateway.routes[2].id=RatingsAndReview
+spring.cloud.gateway.routes[2].uri=lb://RatingsAndReview
+spring.cloud.gateway.routes[2].predicates[0]=Path=/api/reviews/**,/api/agent-responses/**
+
+# New route for Travel Insurance Service
+spring.cloud.gateway.routes[3].id=TravelInsuranceService
+spring.cloud.gateway.routes[3].uri=lb://TravelInsuranceService
+spring.cloud.gateway.routes[3].predicates[0]=Path=/api/insurance/**,/api/assistance/**
+
+
+# New route for TravelBooking_PaymentModule
+# Route to Booking service
+spring.cloud.gateway.routes[4].id=TravelBooking-PaymentModule
+spring.cloud.gateway.routes[4].uri=lb://TravelBooking-PaymentModule
+spring.cloud.gateway.routes[4].predicates[0]=Path=/api/bookings/**,/api/payments/**
+#spring.cloud.gateway.routes[4].filters[0]=RewritePath=/api/(?<segment>.*),/api/$\{segment}
+
+
+
+#CORS Config for Angular App
+spring.cloud.gateway.globalcors.corsConfigurations.[/**].allowedOrigins=http://localhost:4200
+spring.cloud.gateway.globalcors.corsConfigurations.[/**].allowedMethods=GET,POST,PUT,DELETE,OPTIONS
+spring.cloud.gateway.globalcors.corsConfigurations.[/**].allowedHeaders=*
+spring.cloud.gateway.globalcors.corsConfigurations.[/**].allowCredentials=true
+
+<project
+xmlns="http://maven.apache.org/POM/4.0.0"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+ 
+    <groupId>com.example</groupId>
+    <artifactId>api-gateway</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>api-gateway</name>
+ 
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.1.12</version>
+        <relativePath/>
+    </parent>
+ 
+    <properties>
+        <java.version>17</java.version>
+        <spring-cloud.version>2022.0.4</spring-cloud.version>
+    </properties>
+ 
+    <dependencies>
+        <!-- Spring Cloud Gateway (add manually) -->
+        <dependency>
+<groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-gateway</artifactId>
+        </dependency>
+ 
+        <!-- Eureka Discovery Client -->
+        <dependency>
+<groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+        
+        
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-gateway-server</artifactId>
+			<version>4.0.5</version> <!-- Matches 2022.0.4 BOM -->
+		</dependency>
+
+
+		<!-- Spring Boot Starter Test (JUnit + Spring Test) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		
+        
+    </dependencies>
+
+	<!-- Import Spring Cloud BOM for compatibility -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+<groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+ 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+
+
+
+
+Some refernce from booking module
+package com.booking.client;
+
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+
+/**
+ * Feign client for interacting with the Travel Insurance Service.
+ * 
+ * This client provides methods to retrieve insurance prices, validate insurance,
+ * and update booking IDs for insurance records.
+ */
+@FeignClient(name = "TravelInsuranceService", url = "http://localhost:8085")
+public interface TravelInsuranceClient {
+
+    /**
+     * Retrieve the insurance price for a specific user.
+     * 
+     * @param userId The ID of the user.
+     * @return The insurance price for the user.
+     */
+    @GetMapping("/api/insurance/price/user/{userId}")
+    double getInsurancePriceByUserId(@PathVariable("userId") Long userId);
+
+    /**
+     * Retrieve the insurance price for a specific insurance ID.
+     * 
+     * @param insuranceId The ID of the insurance.
+     * @return The insurance price for the insurance ID.
+     */
+    @GetMapping("/api/insurance/price/insurance/{insuranceId}")
+    double getInsurancePriceByInsuranceId(@PathVariable("insuranceId") Integer insuranceId);
+
+    /**
+     * Validate the insurance by its ID.
+     * 
+     * @param insuranceId The ID of the insurance to be validated.
+     * @return true if the insurance is valid, false otherwise.
+     */
+    @GetMapping("/api/insurance/validate/{insuranceId}")
+    boolean validateInsurance(@PathVariable("insuranceId") Integer insuranceId);
+
+    /**
+     * Update the booking ID for a specific insurance record.
+     * 
+     * @param insuranceId The ID of the insurance.
+     * @param bookingId The ID of the booking.
+     * @return A message indicating the result of the update operation.
+     */
+    @PutMapping("/api/insurance/{insuranceId}/booking/{bookingId}")
+    String updateInsuranceBookingId(@PathVariable("insuranceId") Integer insuranceId, @PathVariable("bookingId") Long bookingId);
+}
+
+
+package com.booking.controller;
+
+import com.booking.dto.BookingDTO;
+import jakarta.validation.Valid;
+import com.booking.entity.Booking;
+import com.booking.service.BookingService;
+import com.booking.response.ApiResponse;
+import com.booking.dto.TravelPackageDTO;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.logging.Logger;
+
+/**
+ * Controller for handling booking-related requests.
+ * 
+ * This controller provides endpoints for creating, retrieving, updating, and deleting bookings.
+ */
+@CrossOrigin(origins = "http://localhost:4200")
+@RestController
+@RequestMapping("/api/bookings")
+public class BookingController {
+
+    private final BookingService service;
+    private static final Logger logger = Logger.getLogger(BookingController.class.getName());
+
+    /**
+     * Constructor for BookingController.
+     * 
+     * @param service The BookingService instance to be used by this controller.
+     */
+    public BookingController(BookingService service) {
+        this.service = service;
+    }
+
+    /**
+     * Create a new booking.
+     * 
+     * @param booking The booking entity to be created.
+     * @return ResponseEntity containing the created BookingDTO and HTTP status.
+     */
+    @PostMapping
+    public ResponseEntity<?> createBooking(@Valid @RequestBody Booking booking) {
+        try {
+            BookingDTO bookingDTO = service.createBooking(booking);
+            return new ResponseEntity<>(bookingDTO, HttpStatus.CREATED);
+        } catch (RuntimeException ex) {
+            ex.printStackTrace(); // shows full error in backend logs
+            logger.severe("Error creating booking: " + ex.getMessage());
+
+            // return a proper error JSON message to frontend
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                 .body(new ApiResponse(false, "Booking failed: " + ex.getMessage(), null));
+        }
+    }
+    /**
+     * Retrieve all bookings.
+     * 
+     * @return ResponseEntity containing the list of all bookings and HTTP status.
+     */
+    @GetMapping
+    public ResponseEntity<List<Booking>> getAllBookings() {
+        List<Booking> bookings = service.getAllBookings();
+        return ResponseEntity.ok(bookings);
+    }
+
+    /**
+     * Retrieve a booking by its ID.
+     * 
+     * @param id The ID of the booking to be retrieved.
+     * @return ResponseEntity containing the booking and HTTP status.
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<Booking> getBookingById(@PathVariable Long id) {
+        Booking booking = service.getBookingById(id);
+        if (booking == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(booking);
+    }
+
+    /**
+     * Cancel a booking by its ID.
+     * 
+     * @param id The ID of the booking to be canceled.
+     * @return ResponseEntity containing the cancellation status and HTTP status.
+     */
+    @PutMapping("/cancel/{id}")
+    public ResponseEntity<String> cancelBooking(@PathVariable Long id) {
+        return service.cancelBooking(id);
+    }
+
+    /**
+     * Delete a booking by its ID.
+     * 
+     * @param id The ID of the booking to be deleted.
+     */
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        service.deleteBooking(id);
+    }
+
+    /**
+     * Retrieve bookings by user ID.
+     * 
+     * @param userId The ID of the user whose bookings are to be retrieved.
+     * @return ResponseEntity containing the list of bookings and HTTP status.
+     */
+    @GetMapping("/internal/bookings/user/{userId}")
+    public ResponseEntity<List<Booking>> getBookingsByUserId(@PathVariable Long userId) {
+        List<Booking> bookings = service.getBookingsByUserId(userId);
+        // If the list is empty, return 200 OK with an empty list, not 404
+        return ResponseEntity.ok(bookings); // <--- CHANGE THIS LINE
+    }
+//    @GetMapping("/internal/bookings/user/{userId}")
+//    public ResponseEntity<List<Booking>> getBookingsByUserId(@PathVariable Long userId) {
+//        List<Booking> bookings = service.getBookingsByUserId(userId);
+//        if (bookings.isEmpty()) {
+//            return ResponseEntity.notFound().build();
+//        }
+//        return ResponseEntity.ok(bookings);
+//    }
+    /**
+     * Check if a user has completed a package.
+     * 
+     * @param userId The ID of the user.
+     * @param packageId The ID of the package.
+     * @return boolean indicating whether the user has completed the package.
+     */
+    @GetMapping("/user/{userId}/package/{packageId}/completed")
+    public boolean hasUserCompletedPackage(@PathVariable Long userId, @PathVariable String packageId) {
+        return service.hasUserCompletedPackage(userId, packageId);
+    }
+
+    /**
+     * Retrieve a booking by its ID for internal use.
+     * 
+     * @param id The ID of the booking to be retrieved.
+     * @return ResponseEntity containing the booking and HTTP status.
+     */
+    @GetMapping("/internal/{id}")
+    public ResponseEntity<Booking> getInternalBookingById(@PathVariable Long id) {
+        Booking booking = service.getBookingById(id);
+        if (booking == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(booking);
+    }
+
+    /**
+     * Retrieve all travel packages.
+     * 
+     * @return ResponseEntity containing the ApiResponse with the list of packages and HTTP status.
+     */
+    @GetMapping("/packages")
+    public ResponseEntity<ApiResponse> getAllPackages() {
+        List<TravelPackageDTO> packages = service.getAllPackages();
+        return ResponseEntity.ok(new ApiResponse(true, "All packages retrieved", packages));
+    }
+
+    /**
+     * Retrieve a travel package by its ID.
+     * 
+     * @param packageId The ID of the package to be retrieved.
+     * @return ResponseEntity containing the ApiResponse with the package details and HTTP status.
+     */
+    @GetMapping("/packages/{id}")
+    public ResponseEntity<ApiResponse> getPackageById(@PathVariable("id") Long packageId) {
+        TravelPackageDTO packages = service.getPackageById(packageId);
+        return ResponseEntity.ok(new ApiResponse(true, "Package retrieved successfully", packages));
+    }
+}
+
+
+package com.booking.controller;
+
+import com.booking.dto.PaymentResponseDTO;
+import com.booking.entity.Payment;
+import com.booking.service.PaymentService;
+
+import jakarta.validation.Valid;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Controller for handling payment-related requests.
+ * 
+ * This controller provides end-points for processing payments, calculating expected totals,
+ * and retrieving payment details.
+ */
+@RestController
+@RequestMapping("/api/payments")
+public class PaymentController {
+
+    @Autowired
+    private PaymentService paymentService;
+
+    /**
+     * Process a payment with an optional coupon code.
+     * 
+     * @param payment The payment entity to be processed.
+     * @param couponCode The optional coupon code for discount.
+     * @return PaymentResponseDTO containing the details of the processed payment.
+     */
+    @PostMapping
+    public PaymentResponseDTO process(
+    		@Valid @RequestBody Payment payment,
+            @RequestParam(required = false) String couponCode) {
+
+        Payment savedPayment = paymentService.processPayment(payment, couponCode);
+
+        PaymentResponseDTO response = new PaymentResponseDTO();
+        response.setPaymentId(savedPayment.getPaymentId());
+        response.setUserId(savedPayment.getUserId());
+        response.setBookingId(savedPayment.getBookingId());
+        response.setAmount(savedPayment.getAmount());
+        response.setStatus(savedPayment.getStatus());
+        response.setPaymentMethod(savedPayment.getPaymentMethod());
+        response.setCurrency(savedPayment.getCurrency());
+
+        return response;
+    }
+
+    /**
+     * Calculate the total payable amount before actual payment.
+     * 
+     * @param bookingId The ID of the booking.
+     * @param couponCode The optional coupon code for discount.
+     * @return A map containing the total payable amount.
+     */
+    @GetMapping("/expected-total/{bookingId}")
+    public Map<String, Double> getExpectedTotal(
+            @PathVariable Long bookingId,
+            @RequestParam(required = false) String couponCode) {
+
+        double total = paymentService.calculateExpectedTotal(bookingId, couponCode);
+        return Collections.singletonMap("totalPayable", total);
+    }
+
+    /**
+     * Retrieve all payments.
+     * 
+     * @return A list of all payments.
+     */
+    @GetMapping
+    public List<Payment> getAll() {
+        return paymentService.getAllPayments();
+    }
+
+    /**
+     * Retrieve a payment by its ID.
+     * 
+     * @param id The ID of the payment to be retrieved.
+     * @return The payment entity.
+     */
+    @GetMapping("/{id}")
+    public Payment getById(@PathVariable Long id) {
+        return paymentService.getPaymentById(id);
+    }
+}
+
+
+package com.booking.dto;
+
+import lombok.Data;
+ 
+/**
+ * DTO to carry insurance-related data between the Booking module and the Insurance module.
+ */
+@Data
+public class InsuranceRequestDTO {
+   
+    private Integer insuranceId;
+
+    private Long userId;
+ 
+    private Long bookingId;  // To be updated after successful payment
+ 
+    private String coverageDetails;
+ 
+    private String coverageType;
+ 
+    private double price;
+ 
+    private String provider;
+ 
+    private String status;  // e.g., "PENDING", "ACTIVE", "CANCELLED"
+}
+ 
+package com.booking.service;
+
+import com.booking.client.TravelPackageClient;
+import com.booking.client.TravelInsuranceClient;
+import com.booking.client.UserClient;
+import com.booking.dto.BookingDTO;
+import com.booking.dto.TravelPackageDTO;
+import com.booking.dto.UserDTO;
+import com.booking.entity.Booking;
+import com.booking.repository.BookingRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.logging.Logger;
+
+/**
+ * Service class for handling booking-related operations.
+ * 
+ * This class provides methods for creating, retrieving, updating, and deleting bookings.
+ */
+@Service
+public class BookingService {
+
+    @Autowired
+    private BookingRepository bookingRepo;
+
+    @Autowired
+    private TravelPackageClient travelPackageClient;
+
+    @Autowired
+    private TravelInsuranceClient travelInsuranceClient;
+
+    @Autowired
+    private UserClient userClient;
+
+    private static final Logger logger = Logger.getLogger(BookingService.class.getName());
+
+    /**
+     * Create a new booking.
+     * 
+     * @param bookingRequest The booking entity to be created.
+     * @return BookingDTO containing the details of the created booking.
+     */
+    public BookingDTO createBooking(Booking bookingRequest) {
+        Long userId = bookingRequest.getUserId();
+        Long packageId = bookingRequest.getPackageId();
+        Integer insuranceId = bookingRequest.getInsuranceId();
+
+        logger.info("Creating booking for userId: " + userId + " and packageId: " + packageId);
+
+        // 1. Validate User
+        UserDTO user;
+        try {
+            user = userClient.getCustomerById(userId);
+            if (user == null || !"CUSTOMER".equalsIgnoreCase(user.getRole())) {
+                throw new RuntimeException("User is not a valid CUSTOMER.");
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw new RuntimeException("Failed to fetch user details: " + ex.getMessage());
+        }
+
+        // 2. Validate Package
+        TravelPackageDTO travelPackage;
+        try {
+            travelPackage = travelPackageClient.getPackageById(packageId);
+            if (travelPackage == null) {
+                throw new IllegalArgumentException("Invalid travel package ID.");
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw new RuntimeException("Failed to fetch package details: " + ex.getMessage());
+        }
+
+        // 3. Validate Insurance (optional)
+        if (insuranceId != null && insuranceId > 0) {
+            try {
+                boolean exists = travelInsuranceClient.validateInsurance(insuranceId);
+                if (!exists) {
+                    throw new IllegalArgumentException("Selected Insurance ID is invalid.");
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                throw new RuntimeException("Failed to validate insurance: " + ex.getMessage());
+            }
+        }
+
+        // 4. Create and save booking
+        Booking booking = new Booking();
+        booking.setUserId(userId);
+        booking.setPackageId(packageId);
+        booking.setInsuranceId(insuranceId);
+        booking.setTripStartDate(travelPackage.getTripStartDate());
+        booking.setTripEndDate(travelPackage.getTripEndDate());
+        booking.setStatus("PENDING");
+
+        Booking savedBooking = bookingRepo.save(booking);
+
+        // 5. Build response DTO
+        BookingDTO dto = new BookingDTO();
+        dto.setBookingId(savedBooking.getBookingId());
+        dto.setUserId(userId);
+        dto.setPackageId(packageId);
+        dto.setInsuranceId(insuranceId);
+        dto.setTripStartDate(savedBooking.getTripStartDate());
+        dto.setTripEndDate(savedBooking.getTripEndDate());
+        dto.setStatus(savedBooking.getStatus());
+        dto.setPaymentId(savedBooking.getPaymentId());
+
+        logger.info("Booking created successfully with bookingId: " + savedBooking.getBookingId());
+        return dto;
+    }
+    /**
+     * Retrieve all bookings.
+     * 
+     * @return A list of all bookings.
+     */
+    public List<Booking> getAllBookings() {
+        return bookingRepo.findAll();
+    }
+
+    /**
+     * Retrieve a booking by its ID.
+     * 
+     * @param id The ID of the booking to be retrieved.
+     * @return The booking entity.
+     */
+    public Booking getBookingById(Long id) {
+        return bookingRepo.findById(id).orElse(null);
+    }
+
+    /**
+     * Retrieve a booking by its ID for internal use.
+     * 
+     * @param id The ID of the booking to be retrieved.
+     * @return The booking entity.
+     */
+    public Booking getInternalBookingById(Long id) {
+        return bookingRepo.findById(id).orElse(null);
+    }
+
+    /**
+     * Delete a booking by its ID.
+     * 
+     * @param id The ID of the booking to be deleted.
+     */
+    public void deleteBooking(Long id) {
+        bookingRepo.deleteById(id);
+    }
+
+    /**
+     * Cancel a booking by its ID.
+     * 
+     * @param bookingId The ID of the booking to be canceled.
+     * @return ResponseEntity containing the cancellation status and HTTP status.
+     */
+    public ResponseEntity<String> cancelBooking(Long bookingId) {
+        Booking booking = bookingRepo.findById(bookingId).orElse(null);
+        if (booking == null) {
+            return ResponseEntity.badRequest().body("Booking not found.");
+        }
+        LocalDate today = LocalDate.now();
+        if (booking.getTripStartDate().minusDays(7).isBefore(today)) {
+            return ResponseEntity.badRequest().body("Cancellation not allowed. Must cancel at least 7 days before departure.");
+        }
+        booking.setStatus("CANCELLED");
+        bookingRepo.save(booking);
+        return ResponseEntity.ok("Booking cancelled successfully.");
+    }
+
+    /**
+     * Retrieve bookings by user ID.
+     * 
+     * @param userId The ID of the user whose bookings are to be retrieved.
+     * @return A list of bookings associated with the user ID.
+     */
+    public List<Booking> getBookingsByUserId(Long userId) {
+        return bookingRepo.findByUserId(userId);
+    }
+
+    /**
+     * Check if a user has completed a package.
+     * 
+     * @param userId The ID of the user.
+     * @param packageId The ID of the package.
+     * @return boolean indicating whether the user has completed the package.
+     */
+    public boolean hasUserCompletedPackage(Long userId, String packageId) {
+        List<Booking> bookings = bookingRepo.findByUserId(userId);
+        LocalDate today = LocalDate.now();
+        return bookings.stream()
+            .anyMatch(b ->
+                String.valueOf(b.getPackageId()).equals(packageId) &&
+                "CONFIRMED".equalsIgnoreCase(b.getStatus()) &&
+                !b.getTripEndDate().isAfter(today) // includes today
+            );
+    }
+
+    /**
+     * Retrieve all travel packages.
+     * 
+     * @return A list of TravelPackageDTO representing all travel packages.
+     */
+    public List<TravelPackageDTO> getAllPackages() {
+        return travelPackageClient.getAllPackages();
+    }
+
+    /**
+     * Retrieve a travel package by its ID.
+     * 
+     * @param packageId The ID of the travel package to be retrieved.
+     * @return The TravelPackageDTO representing the travel package.
+     */
+    public TravelPackageDTO getPackageById(Long packageId) {
+        return travelPackageClient.getPackageById(packageId);
+    }
+}
+
+
+package com.booking.service;
+
+import com.booking.client.TravelPackageClient;
+import com.booking.client.TravelInsuranceClient;
+import com.booking.dto.OfferDTO;
+import com.booking.dto.TravelPackageDTO;
+import com.booking.entity.Booking;
+import com.booking.entity.Payment;
+import com.booking.exception.CustomBusinessException;
+import com.booking.repository.BookingRepository;
+import com.booking.repository.PaymentRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Service class for handling payment-related operations.
+ * This class provides methods for processing payments, calculating expected totals,
+ * and retrieving payment details.
+ */
+@Service
+public class PaymentService {
+
+    @Autowired
+    private PaymentRepository paymentRepo;
+
+    @Autowired
+    private BookingRepository bookingRepo;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
+    private TravelPackageClient travelPackageClient;
+
+    @Autowired
+    private TravelInsuranceClient travelInsuranceClient;
+
+    private static final Logger log = LoggerFactory.getLogger(PaymentService.class);
+
+    /**
+     * Process a payment with an optional coupon code.
+     * 
+     * @param payment The payment entity to be processed.
+     * @param couponCodeApplied The optional coupon code for discount.
+     * @return The processed Payment entity.
+     */
+    public Payment processPayment(Payment payment, String couponCodeApplied) {
+        Optional<Payment> existingPayment = paymentRepo.findByBookingIdAndUserId(payment.getBookingId(), payment.getUserId());
+
+        if (existingPayment.isPresent()) {
+            throw new CustomBusinessException("Payment already made for this booking by this user.");
+        }
+
+        Long bookingId = payment.getBookingId();
+        Booking booking = bookingRepo.findById(bookingId).orElse(null);
+        if (booking == null) {
+            throw new IllegalArgumentException("Booking with ID " + bookingId + " not found.");
+        }
+
+        TravelPackageDTO pkg = travelPackageClient.getPackageById(booking.getPackageId());
+        if (pkg == null) {
+            throw new IllegalArgumentException("Invalid package ID associated with booking.");
+        }
+
+        double packagePrice = pkg.getPrice();
+        double insurancePrice = 0.0;
+        if (booking.getInsuranceId() != null && booking.getInsuranceId() > 0) {
+            try {
+                insurancePrice = travelInsuranceClient.getInsurancePriceByInsuranceId(booking.getInsuranceId().intValue());
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Failed to fetch insurance price. Verify Insurance Service is reachable.");
+            }
+        }
+
+        double discountAmount = 0.0;
+        if (couponCodeApplied != null && pkg.getOffer() != null) {
+            OfferDTO offer = pkg.getOffer();
+            if (couponCodeApplied.equalsIgnoreCase(offer.getCouponCode()) && offer.isActive()) {
+                discountAmount = (packagePrice * offer.getDiscountPercentage()) / 100.0;
+                System.out.println("Coupon applied. Discount amount: " + discountAmount);
+            }
+        }
+
+        double expectedTotal = packagePrice + insurancePrice - discountAmount;
+
+        if (Math.abs(payment.getAmount() - expectedTotal) > 0.01) {
+            log.warn("Payment mismatch: paid={}, expected={}", payment, expectedTotal);
+            throw new IllegalArgumentException("Payment amount mismatch. Expected: " + expectedTotal);
+        }
+
+        if (!payment.getPaymentMethod().equalsIgnoreCase("Credit Card") &&
+            !payment.getPaymentMethod().equalsIgnoreCase("Debit Card")) {
+            throw new IllegalArgumentException("Only Credit Card or Debit Card accepted.");
+        }
+
+        if (payment.getCardNumber() == null || !payment.getCardNumber().matches("\\d{16}")) {
+            throw new IllegalArgumentException("Invalid card number.");
+        }
+
+        if (payment.getCvv() == null || !payment.getCvv().matches("\\d{3}")) {
+            throw new IllegalArgumentException("Invalid CVV.");
+        }
+
+        if (payment.getAtmPin() == null || !payment.getAtmPin().matches("\\d{4}")) {
+            throw new IllegalArgumentException("Invalid ATM PIN.");
+        }
+
+        if (payment.getExpiryDate() == null || !payment.getExpiryDate().matches("\\d{2}/\\d{2}")) {
+            throw new IllegalArgumentException("Expiry date format invalid.");
+        }
+
+        String[] parts = payment.getExpiryDate().split("/");
+        int expMonth = Integer.parseInt(parts[0]);
+        int expYear = 2000 + Integer.parseInt(parts[1]);
+
+        int currentMonth = LocalDate.now().getMonthValue();
+        int currentYear = LocalDate.now().getYear();
+
+        if (expMonth < 1 || expMonth > 12 || expYear < currentYear ||
+           (expYear == currentYear && expMonth < currentMonth)) {
+            throw new IllegalArgumentException("Card has expired.");
+        }
+
+        payment.setStatus("PAID");
+        Payment savedPayment = paymentRepo.save(payment);
+
+        booking.setStatus("CONFIRMED");
+        booking.setPaymentId(savedPayment.getPaymentId());
+        bookingRepo.save(booking);
+
+        if (insurancePrice > 0.0) {
+            travelInsuranceClient.updateInsuranceBookingId(booking.getInsuranceId().intValue(), booking.getBookingId());
+        }
+
+        notificationService.notifyCustomer(booking, savedPayment);
+        notificationService.notifyTravelAgent(booking, savedPayment);
+
+        return savedPayment;
+    }
+
+    /**
+     * Calculate the total payable amount before actual payment.
+     * 
+     * @param bookingId The ID of the booking.
+     * @param couponCodeApplied The optional coupon code for discount.
+     * @return The total payable amount.
+     */
+    public double calculateExpectedTotal(Long bookingId, String couponCodeApplied) {
+        Booking booking = bookingRepo.findById(bookingId).orElse(null);
+        if (booking == null) throw new IllegalArgumentException("Booking not found");
+
+        TravelPackageDTO pkg = travelPackageClient.getPackageById(booking.getPackageId());
+        if (pkg == null) throw new IllegalArgumentException("Package not found");
+
+        double packagePrice = pkg.getPrice();
+
+        double insurancePrice = 0.0;
+        if (booking.getInsuranceId() != null && booking.getInsuranceId() > 0) {
+            insurancePrice = travelInsuranceClient.getInsurancePriceByInsuranceId(booking.getInsuranceId().intValue());
+        }
+
+        double discountAmount = 0.0;
+        if (couponCodeApplied != null && pkg.getOffer() != null) {
+            OfferDTO offer = pkg.getOffer();
+            if (couponCodeApplied.equalsIgnoreCase(offer.getCouponCode()) && offer.isActive()) {
+                discountAmount = (packagePrice * offer.getDiscountPercentage()) / 100.0;
+            }
+        }
+
+        return packagePrice + insurancePrice - discountAmount;
+    }
+
+    /**
+     * Retrieve all payments.
+     * 
+     * @return A list of all payments.
+     */
+    public List<Payment> getAllPayments() {
+        return paymentRepo.findAll();
+    }
+
+    /**
+     * Retrieve a payment by its ID.
+     * 
+     * @param id The ID of the payment to be retrieved.
+     * @return The payment entity.
+     */
+    public Payment getPaymentById(Long id) {
+        return paymentRepo.findById(id).orElse(null);
+    }
+}
+
+spring.application.name=TravelBooking-PaymentModule
+spring.datasource.url=jdbc:mysql://localhost:3306/booking_db
+server.port=8086
+spring.datasource.username=root
+spring.datasource.password=root
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+logging.level.org.hibernate.SQL=debug
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587
+spring.mail.username=indhaanman@gmail.com
+spring.mail.password=ibzbwveckpfjibey
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+
+spring.cloud.compatibility-verifier.enabled=false
+
+# optional:Srt timeout and logging
+spring.cloud.openfeign.client.config.default.connectTimeout=5000
+spring.cloud.openfeign.client.config.default.readTimeout=5000
+
+
+spring.cloud.openfeign.client.config.default.loggerLevel=full
+
+
+# Eureka Client Configuration
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka
+eureka.instance.prefer-ip-address=true
+
+
+#debug=true
+eureka.client.register-with-eureka=true
+eureka.client.fetch-registry=true
+
+logging.level.root=DEBUG
+logging.level.org.springframework.web=DEBUG
+
+
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+ 
+    <modelVersion>4.0.0</modelVersion>
+ 
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.5.0</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+ 
+    <groupId>com.booking</groupId>
+    <artifactId>TravelBooking_PaymentModule</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>TravelBooking_PaymentModule</name>
+    <properties>
+        <java.version>17</java.version>
+    </properties>
+ 
+    <!-- Spring Cloud BOM -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>2024.0.1</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+ 
+    <dependencies>
+        <!-- Spring Web -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        
+        <!--Eureka Client Dependency-->
+        <dependency>
+    		<groupId>org.springframework.cloud</groupId>
+    		<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>    
+		</dependency>
+ 
+ 
+        <!-- Thymeleaf (optional) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+		<dependency>
+    	<groupId>org.projectlombok</groupId>
+    	<artifactId>lombok</artifactId>
+    	<version>1.18.30</version> <!-- Use the latest version if needed -->
+    	<scope>provided</scope>
+		</dependency>
+ 
+        <!-- Spring Data JPA -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+ 
+        <!-- MySQL Connector -->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.33</version>
+        </dependency>
+ 
+        <!-- Spring Cloud OpenFeign -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+        <!--Dependency for load balancing-->
+        <dependency>
+   			<groupId>org.springframework.cloud</groupId>
+    		<artifactId>spring-cloud-starter-loadbalancer</artifactId>
+		</dependency>
+ 
+ 
+        <!-- Spring Mail -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+ 
+        <!-- Web Services (optional) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web-services</artifactId>
+        </dependency>
+ 
+        <!-- Testing -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+       
+ 
+        
+        <!-- https://mvnrepository.com/artifact/org.mockito/mockito-core -->
+		<!-- https://mvnrepository.com/artifact/org.mockito/mockito-core -->
+<dependency>
+    <groupId>org.mockito</groupId>
+    <artifactId>mockito-core</artifactId>
+    <version>5.18.0</version>
+    <scope>test</scope>
+</dependency>
+        
+        <dependency>
+			<groupId>jakarta.validation</groupId>
+			<artifactId>jakarta.validation-api</artifactId>
+			<version>3.0.2</version>
+		</dependency>
+		
+    </dependencies>
+ 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+ 
+</project>
+
 
 
